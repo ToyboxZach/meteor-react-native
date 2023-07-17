@@ -102,13 +102,23 @@ const User = {
           'id:',
           result.id
         );
-      Data._options.AsyncStorage.setItem(TOKEN_KEY, result.token);
-      Data._tokenIdSaved = result.token;
-      this._reactiveDict.set('_userIdSaved', result.id);
-      User._userIdSaved = result.id;
-      User._endLoggingIn();
-      this._isTokenLogin = false;
-      Data.notify('onLogin');
+      if (!Users.findOne({ _id: result.id }) && this._isTokenLogin) {
+        Meteor.isVerbose &&
+          console.info(
+            'User._handleLoginCallback::: Unkown error when logging in trying again:',
+            result.token
+          );
+        // Something went wrong, lets just re- login
+        _loginWithToken(result.token);
+      } else {
+        Data._options.AsyncStorage.setItem(TOKEN_KEY, result.token);
+        Data._tokenIdSaved = result.token;
+        this._reactiveDict.set('_userIdSaved', result.id);
+        User._userIdSaved = result.id;
+        User._endLoggingIn();
+        this._isTokenLogin = false;
+        Data.notify('onLogin');
+      }
     } else {
       Meteor.isVerbose &&
         console.info('User._handleLoginCallback::: error:', err);
@@ -118,17 +128,25 @@ const User = {
             return;
           }
           this._timeout *= 2;
-          if (Meteor.user()) {
+          const user = Meteor.user();
+          if (user) {
+            this._reactiveDict.set('_userIdSaved', user._id);
+            User._userIdSaved = user._id;
+            User._endLoggingIn();
+            this._isTokenLogin = false;
+            Data.notify('onLogin');
             return;
           }
           User._loginWithToken(User._userIdSaved);
         }, this._timeout);
-      }
-      // Signify we aren't logginging in any more after a few seconds
-      if (this._timeout > 2000) {
+        if (this._timeout > 2000) {
+          User._endLoggingIn();
+        }
+      } else {
         User._endLoggingIn();
       }
-      User._endLoggingIn();
+      // Signify we aren't logginging in any more after a few seconds
+
       Data.notify('onLoginFailure');
     }
     Data.notify('change');
