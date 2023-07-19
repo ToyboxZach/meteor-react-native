@@ -109,7 +109,7 @@ const User = {
             result.token
           );
         // Something went wrong, lets just re- login
-        _loginWithToken(result.token);
+        User._loginWithToken(result.token);
       } else {
         Data._options.AsyncStorage.setItem(TOKEN_KEY, result.token);
         Data._tokenIdSaved = result.token;
