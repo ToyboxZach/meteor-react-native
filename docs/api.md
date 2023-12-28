@@ -23,6 +23,7 @@ Connect to the Meteor Server
 - autoReconnect **boolean** [true] whether to try to reconnect to the server when the socket connection closes, unless the closing was initiated by a call to the disconnect method.
 - reconnectInterval **number** [10000] the interval in ms between reconnection attempts.
 - AsyncStorage **object** your preferred AsyncStorage. Defaults to `'@react-native-async-storage/async-storage'` as a peer dependency.
+- reachabilityUrl **string** ["https://clients3.google.com/generate_204"] server to check internet reachability, used by NetInfo. If not provided, NetInfos default url will be used, which currently is `'https://clients3.google.com/generate_204'`
 
 ### `Meteor.disconnect()`
 
@@ -60,7 +61,20 @@ Gets the current connection status. Returns an object with the following propert
 
 Returns true if attempting to login
 
-### `Meteor.loginWithPassword`
+### `Meteor.loggingOut()`
+
+Returns true if attempting to logout
+
+### `Meteor.loginWithPassword(selector, password, callback)`
+
+Logs a user in. If selector is a string containing `@`, then this will be interpreted as an email, other strings as a username. The selector can also be an object with a single key `email`, `id` or `username`.
+The optional Callback is called with a single `Error` argument on failure.
+
+If 2fa is enabled, the `error` property of the argument may be `no-2fa-code`. Read more in [the Meteor docs](https://docs.meteor.com/api/accounts#Meteor-loginWithPassword)
+
+### `Meteor.loginWithPasswordAnd2faCode(selector, password, code, callback)`
+
+Logs a user in, same as `loginWithPassword`, but providing a 2fa token via the argument `code`. Read more on this [in the Meteor docs](https://docs.meteor.com/packages/accounts-2fa.html).
 
 ### `Meteor.logout`
 
@@ -168,6 +182,14 @@ Registers a callback to be called when login fails
 **Arguments**
 
 - callback
+
+#### `Accounts.has2faEnabled(callback)`
+
+Checks if the current user has 2fa enabled, via callback; cf. [the meteor docs](https://docs.meteor.com/packages/accounts-2fa#Accounts-has2faEnabled)
+
+**Arguments**
+
+- callback - Called with an error on the first argument, e.g. if the user is currently not logged in, and a boolean result on the second argument, if the user has 2fa enabled.
 
 #### `Accounts._hashPassword(plaintext)` => `{algorithm:"sha-256", digest:"..."}`
 

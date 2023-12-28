@@ -13,12 +13,10 @@ import useTracker from './components/useTracker';
 
 import ReactiveDict from './ReactiveDict';
 
-let isVerbose = false;
-
 const Meteor = {
-  isVerbose,
+  isVerbose: false,
   enableVerbose() {
-    isVerbose = true;
+    this.isVerbose = true;
   },
   _reactiveDict: new ReactiveDict(),
   Random,
@@ -73,7 +71,7 @@ const Meteor = {
     return {
       AsyncStorage:
         Data._options.AsyncStorage ||
-        require('@react-native-community/async-storage').default,
+        require('@react-native-async-storage/async-storage').default,
     };
   },
   connect(endpoint, options) {
@@ -91,7 +89,7 @@ const Meteor = {
 
     if (!options.AsyncStorage) {
       const AsyncStorage =
-        require('@react-native-community/async-storage').default;
+        require('@react-native-async-storage/async-storage').default;
 
       if (AsyncStorage) {
         options.AsyncStorage = AsyncStorage;
@@ -113,7 +111,16 @@ const Meteor = {
 
     try {
       const NetInfo = require('@react-native-community/netinfo').default;
+
+      if (options.reachabilityUrl) {
+        NetInfo.configure({
+          reachabilityUrl: options.reachabilityUrl,
+          useNativeReachability: true,
+        });
+      }
+
       // Reconnect if we lose internet
+
       NetInfo.addEventListener(
         ({ type, isConnected, isInternetReachable, isWifiEnabled }) => {
           if (isConnected && Data.ddp.autoReconnect) {
@@ -138,7 +145,7 @@ const Meteor = {
         }
       }
 
-      if (isVerbose) {
+      if (this.isVerbose) {
         console.info('Connected to DDP server.');
       }
       this._loadInitialUser().then(() => {
@@ -156,8 +163,15 @@ const Meteor = {
 
       Data.notify('change');
 
-      if (isVerbose) {
+      if (this.isVerbose) {
         console.info('Disconnected from DDP server.');
+      }
+
+      // Mark subscriptions as ready=false
+      for (var i in Data.subscriptions) {
+        const sub = Data.subscriptions[i];
+        sub.ready = false;
+        sub.readyDeps.changed();
       }
 
       if (!Data.ddp.autoReconnect) return;

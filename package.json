@@ -1,6 +1,6 @@
 {
   "name": "@meteorrn/core",
-  "version": "2.3.0",
+  "version": "2.7.1",
   "description": "Full Meteor Client for React Native",
   "main": "src/index.js",
   "repository": {
@@ -29,7 +29,7 @@
   "dependencies": {
     "@meteorrn/minimongo": "1.0.1",
     "ejson": "2.2.3",
-    "wolfy87-eventemitter": "4.3.0"
+    "eventemitter3": "^5.0.1"
   },
   "devDependencies": {
     "@babel/core": "7.19.6",
@@ -47,10 +47,12 @@
     "nyc": "15.1.0",
     "prettier": "2.7.1",
     "rewiremock": "3.14.3",
-    "sinon": "12.0.1"
+    "sinon": "12.0.1",
+    "@react-native-community/netinfo": "*",
+    "react": "*"
   },
   "optionalDependencies": {
-    "@react-native-community/async-storage": ">=1.12.1"
+    "@react-native-async-storage/async-storage": ">=1.13.0"
   },
   "peerDependencies": {
     "@react-native-community/netinfo": "*",
@@ -59,5 +61,10 @@
   },
   "engines": {
     "node": ">= 14.x"
-  }
+  },
+  "files": [
+    "lib",
+    "src",
+    "helpers"
+  ]
 }

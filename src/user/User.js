@@ -26,11 +26,17 @@ const User = {
     const user = Users.findOne(user_id);
     return user && user._id;
   },
+  _isLoggingIn: true,
+  _isLoggingOut: false,
   loggingIn() {
     return this._reactiveDict.get('_loggingIn');
   },
+  loggingOut() {
+    return User._isLoggingOut;
+  },
   logout(callback) {
     this._isTokenLogin = false;
+    User._startLoggingOut();
     Meteor.call('logout', (err) => {
       User.handleLogout();
       Meteor.connect();
@@ -44,6 +50,7 @@ const User = {
     this._reactiveDict.set('_userIdSaved', null);
 
     User._userIdSaved = null;
+    User._endLoggingOut();
   },
   loginWithPassword(selector, password, callback) {
     this._isTokenLogin = false;
@@ -58,6 +65,28 @@ const User = {
       {
         user: selector,
         password: hashPassword(password),
+      },
+      (err, result) => {
+        User._handleLoginCallback(err, result);
+
+        typeof callback == 'function' && callback(err);
+      }
+    );
+  },
+  loginWithPasswordAnd2faCode(selector, password, code, callback) {
+    this._isTokenLogin = false;
+    if (typeof selector === 'string') {
+      if (selector.indexOf('@') === -1) selector = { username: selector };
+      else selector = { email: selector };
+    }
+
+    User._startLoggingIn();
+    Meteor.call(
+      'login',
+      {
+        user: selector,
+        password: hashPassword(password),
+        code,
       },
       (err, result) => {
         User._handleLoginCallback(err, result);
@@ -89,9 +118,17 @@ const User = {
     this._reactiveDict.set('_loggingIn', true);
     Data.notify('loggingIn');
   },
+  _startLoggingOut() {
+    User._isLoggingOut = true;
+    Data.notify('loggingOut');
+  },
   _endLoggingIn() {
     this._reactiveDict.set('_loggingIn', false);
     Data.notify('loggingIn');
+  },
+  _endLoggingOut() {
+    User._isLoggingOut = false;
+    Data.notify('loggingOut');
   },
   _handleLoginCallback(err, result) {
     if (!err) {
@@ -177,6 +214,8 @@ const User = {
             }
             this._loadInitialUser();
           }, time + 100);
+        } else if (err?.error === 403) {
+          User.logout();
         } else {
           User._handleLoginCallback(err, result);
         }
