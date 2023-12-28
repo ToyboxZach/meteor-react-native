@@ -115,9 +115,8 @@ const User = {
         Data._tokenIdSaved = result.token;
         this._reactiveDict.set('_userIdSaved', result.id);
         User._userIdSaved = result.id;
-        User._endLoggingIn();
         this._isTokenLogin = false;
-        Data.notify('onLogin');
+        User._endLoggingIn();
       }
     } else {
       Meteor.isVerbose &&
@@ -132,9 +131,8 @@ const User = {
           if (user) {
             this._reactiveDict.set('_userIdSaved', user._id);
             User._userIdSaved = user._id;
-            User._endLoggingIn();
             this._isTokenLogin = false;
-            Data.notify('onLogin');
+            User._endLoggingIn();
             return;
           }
           User._loginWithToken(User._userIdSaved);
@@ -164,7 +162,6 @@ const User = {
         return;
       }
       this._isCallingLogin = true;
-      User._startLoggingIn();
       Meteor.call('login', { resume: value }, (err, result) => {
         this._isCallingLogin = false;
         if (err?.error == 'too-many-requests') {
@@ -202,6 +199,7 @@ const User = {
     } catch (error) {
       console.warn('AsyncStorage error: ' + error.message);
     } finally {
+      User._startLoggingIn();
       User._loginWithToken(value);
     }
   },

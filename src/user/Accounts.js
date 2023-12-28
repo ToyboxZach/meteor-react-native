@@ -59,6 +59,7 @@ class AccountsPassword {
         console.info('Accounts.resetPassword::: err:', err, 'result:', result);
 
       if (!err) {
+        User._startLoggingIn();
         User._loginWithToken(result.token);
       }
 
